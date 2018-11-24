@@ -7,8 +7,6 @@ using namespace std;
 #define MAX_FRAME 1000
 #define MIN_NUM_FEAT 2000
 
-// IMP: Change the file directories (4 places) according to where your dataset is saved before running!
-
 double getAbsoluteScale(int frame_id, int sequence_id, double z_cal) {
 
     string line;
@@ -47,8 +45,13 @@ int main(int argc, char **argv) {
     Mat img_1, img_2;
     Mat R_f, t_f; //the final rotation and tranlation vectors containing the
 
-    ofstream myfile;
-    myfile.open("results1_1.txt");
+    R_f = Mat::zeros(3, 3, CV_32FC1);
+    t_f = Mat::zeros(3, 1, CV_32FC1);
+
+    FileStorage storage("test.xml", cv::FileStorage::WRITE);
+    storage << "R0" << R_f;
+    storage << "T0" << t_f;
+
 
     double scale = 1.00;
     char filename1[200];
@@ -95,8 +98,11 @@ int main(int argc, char **argv) {
 
     char filename[100];
 
+
     R_f = R.clone();
     t_f = t.clone();
+    storage << "R1" << R_f;
+    storage << "T1" << t_f;
 
     clock_t begin = clock();
 
@@ -104,7 +110,7 @@ int main(int argc, char **argv) {
     namedWindow("Trajectory", WINDOW_AUTOSIZE);// Create a window for display.
 
     Mat traj = Mat::zeros(600, 600, CV_8UC3);
-    VideoWriter v("traj.avi", CV_FOURCC('M','J','P','G'),20, Size(600,600));
+//    VideoWriter v("traj.avi", CV_FOURCC('M','J','P','G'),20, Size(600,600));
     clock_t temp = clock();
 
 
@@ -167,21 +173,24 @@ int main(int argc, char **argv) {
         imshow("Camera", currImage_c);
         imshow("Trajectory", traj);
 
-        v.write(traj);
+//        v.write(traj);
         waitKey(1);
         clock_t n = clock();
         cout << "Trjectory Calculation: " << double(n - temp) / CLOCKS_PER_SEC * 1000 << "ms" << endl;
         temp = clock();
-        cout << R_f << endl;
-        cout << t_f << endl;
+        string rname = "R" + to_string(numFrame);
+        string tname = "T" + to_string(numFrame);
+        storage << rname << R_f;
+        storage << tname << t_f;
     }
-    v.release();
+//    v.release();
+    storage.release();
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     cout << "Total time taken: " << elapsed_secs << "s" << endl;
 
     cout << R_f << endl;
     cout << t_f << endl;
-
+    storage.release();
     return 0;
 }
